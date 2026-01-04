@@ -4,22 +4,16 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "./start.sh",
-    "start:windows": "start.bat",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" --names \"FRONT,BACK\" --prefix-colors \"cyan,magenta\"",
+    "start": "npm run dev",
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"magenta,cyan\" \"cd server && npm run dev\" \"vite\"",
     "dev:frontend": "vite",
     "dev:backend": "cd server && npm run dev",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "vite build",
     "build:backend": "cd server && npm run build",
-    "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "install:all": "npm install && cd server && npm install",
-    "setup": "npm run install:all && cd server && npm run prisma:generate",
-    "db:migrate": "cd server && npx prisma migrate dev",
-    "db:studio": "cd server && npx prisma studio",
-    "db:generate": "cd server && npx prisma generate"
+    "setup": "npm install && cd server && npm install && npx prisma generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
