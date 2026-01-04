@@ -1,0 +1,124 @@
+// Prisma Schema for AI Story Forge
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Subscription
+  subscriptionTier String  @default("free") // free, pro, enterprise
+  subscriptionStatus String @default("active")
+  stripeCustomerId String?
+
+  // Usage limits
+  monthlyEdits  Int      @default(0)
+  maxMonthlyEdits Int    @default(50)
+  lastEditReset DateTime @default(now())
+
+  ebooks        Ebook[]
+  magicLinks    MagicLink[]
+
+  @@index([email])
+}
+
+model MagicLink {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  email     String
+  userId    String?
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([email])
+}
+
+model Ebook {
+  id          String   @id @default(uuid())
+  title       String
+  subtitle    String?
+  slug        String   @unique
+
+  // Generation params
+  topic       String
+  chapters    Int      @default(8)
+  audience    String
+  tone        String   // professional, casual, academic, narrative
+  objective   String?
+
+  // Content
+  content     Json     // Array of chapters with content
+  coverImage  String?
+
+  // Status
+  status      String   @default("draft") // draft, published, archived
+
+  // Stats
+  views       Int      @default(0)
+  sales       Int      @default(0)
+  revenue     Float    @default(0)
+
+  // Pricing
+  price       Float?
+  isPaid      Boolean  @default(false)
+
+  // Metadata
+  wordCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  activities  Activity[]
+
+  @@index([userId])
+  @@index([slug])
+  @@index([status])
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  type        String   // created, updated, published, viewed, sold
+  description String
+  createdAt   DateTime @default(now())
+
+  ebookId     String?
+  ebook       Ebook?   @relation(fields: [ebookId], references: [id], onDelete: Cascade)
+
+  @@index([ebookId])
+  @@index([createdAt])
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  stripePaymentId String   @unique
+  amount          Float
+  currency        String   @default("eur")
+  status          String   // succeeded, pending, failed
+
+  customerId      String
+  customerEmail   String
+
+  metadata        Json?
+
+  createdAt       DateTime @default(now())
+
+  @@index([customerId])
+  @@index([stripePaymentId])
+}
